@@ -3,7 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# ১. গুগল শিট কানেকশন সেটআপ (আপনার দেওয়া JSON ডাটা)
+# ১. কানেকশন সেটআপ
 info = {
     "type": "service_account",
     "project_id": "long-province-484004-a7",
@@ -21,28 +21,29 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
 client = gspread.authorize(creds)
 
-# ২. আপনার শিট কানেক্ট করা (নাম Poultry Data)
+# ২. শিট কানেক্ট করা (নাম Poultry Data)
 try:
-    # এখানে একদম সঠিক নাম ব্যবহার করা হয়েছে
-    sheet = client.open("Poultry Data").get_worksheet(0)
+    # এটি আপনার 'Poultry Data' ফাইলের একদম প্রথম ট্যাবটি খুঁজে নেবে
+    sh = client.open("Poultry Data")
+    sheet = sh.get_worksheet(0) 
 except Exception as e:
-    st.error("গুগল শিটটি খুঁজে পাওয়া যাচ্ছে না। দয়া করে শিটের নাম চেক করুন।")
+    st.error(f"শিট খুঁজে পাওয়া যায়নি! নিশ্চিত করুন শিটের নাম 'Poultry Data' এবং এটি শেয়ার করা হয়েছে। ভুল: {e}")
+    sheet = None
 
 st.title("🐔 খামার ডায়েরি (Farm Manager)")
 
-# ডাটা ইনপুট ফরম
-with st.form("farm_form", clear_on_submit=True):
-    date = st.date_input("তারিখ", datetime.now())
-    eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
-    feed = st.number_input("খাবার খরচ/পরিমাণ (Feed)", min_value=0.0)
-    medicine = st.text_input("ওষুধের নাম/খরচ (Medicine)")
-    
-    submitted = st.form_submit_button("জমা দিন (Submit)")
+if sheet:
+    with st.form("farm_form", clear_on_submit=True):
+        date = st.date_input("তারিখ", datetime.now())
+        eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
+        feed = st.number_input("খাবার খরচ/পরিমাণ (Feed)", min_value=0.0)
+        medicine = st.text_input("ওষুধের নাম/খরচ (Medicine)")
+        
+        submitted = st.form_submit_button("জমা দিন (Submit)")
 
-if submitted:
-    try:
-        # শিটে ডাটা পাঠানো
-        sheet.append_row([str(date), eggs, feed, medicine])
-        st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
-    except Exception as e:
-        st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
+    if submitted:
+        try:
+            sheet.append_row([str(date), eggs, feed, medicine])
+            st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
+        except Exception as e:
+            st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
