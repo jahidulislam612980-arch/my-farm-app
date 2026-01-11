@@ -3,7 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# ১. গুগল শিট কানেকশন সেটআপ (আপনার JSON ডাটা ব্যবহার করা হয়েছে)
+# ১. গুগল শিট কানেকশন সেটআপ
 info = {
     "type": "service_account",
     "project_id": "long-province-484004-a7",
@@ -18,39 +18,35 @@ info = {
 }
 
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-client = gspread.authorize(creds)
 
-# ২. শিট কানেক্ট করা (Poultry Data)
-# আমি এখানে ট্রাই-এক্সেপ্ট ব্লক দিয়েছি যাতে এরর আসলে আপনি বুঝতে পারেন
-sheet = None
+# ২. কানেকশন চেক
 try:
-    # আপনার গুগল শিটটি ওপেন করা হচ্ছে
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    client = gspread.authorize(creds)
+    # আপনার শিটের নাম হুবহু মিলতে হবে
     sh = client.open("Poultry Data")
-    # প্রথম ট্যাবটি (Sheet1) সিলেক্ট করা হচ্ছে
     sheet = sh.get_worksheet(0)
+    connected = True
 except Exception as e:
-    st.error(f"গুগল শিট কানেক্ট করতে সমস্যা হচ্ছে। এরর: {e}")
+    connected = False
+    error_msg = str(e)
 
-# অ্যাপের ইন্টারফেস
 st.title("🐔 খামার ডায়েরি (Farm Manager)")
 
-if sheet is not None:
-    # ডাটা ইনপুট ফরম
+if connected:
     with st.form("farm_form", clear_on_submit=True):
         date = st.date_input("তারিখ", datetime.now())
         eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
-        feed = st.number_input("খাবার খরচ/পরিমাণ (Feed)", min_value=0.0)
-        medicine = st.text_input("ওষুধের নাম/খরচ (Medicine)")
-        
-        submitted = st.form_submit_button("জমা দিন (Submit)")
+        feed = st.number_input("খাবার খরচ (Feed)", min_value=0.0)
+        medicine = st.text_input("ওষুধ (Medicine)")
+        submitted = st.form_submit_button("জমা দিন")
 
     if submitted:
         try:
-            # শিটে ডাটা পাঠানো হচ্ছে
             sheet.append_row([str(date), eggs, feed, medicine])
-            st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
-        except Exception as e:
-            st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
+            st.success("সফলভাবে সেভ হয়েছে! ✅")
+        except:
+            st.error("ডাটা শিটে পাঠাতে সমস্যা হয়েছে।")
 else:
-    st.warning("আপনার গুগল শিট 'Poultry Data' খুঁজে পাওয়া যাচ্ছে না। দয়া করে শিটের নাম চেক করুন।")
+    st.error(f"কানেকশন সমস্যা: {error_msg}")
+    st.info("গুগল শিটটি 'farm-manager@long-province-484004-a7.iam.gserviceaccount.com' ইমেইলের সাথে শেয়ার করেছেন তো?")
