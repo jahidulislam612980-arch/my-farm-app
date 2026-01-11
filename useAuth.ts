@@ -72,7 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }), [user, login, logout, isLoading, error]);
 
   // Fix: Ensure the opening parenthesis for multi-line JSX immediately follows `return`
-  return (<AuthContext.Provider value={value}>
+  return (
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
