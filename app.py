@@ -3,15 +3,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# ১. গুগল শিট কানেকশন সেটআপ (Secrets থেকে ডাটা নিচ্ছে)
+# ১. কানেকশন সেটআপ (Secrets থেকে ডাটা নিচ্ছে)
 info = st.secrets["gcp_service_account"]
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 try:
-    # কানেকশন রিফ্রেশ করার জন্য এটি সবচেয়ে ভালো উপায়
     creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
     client = gspread.authorize(creds)
-    # আপনার শিটের নাম হুবহু Poultry Data হতে হবে
+    # আপনার শিটের নাম হুবহু Poultry Data
     sh = client.open("Poultry Data")
     sheet = sh.get_worksheet(0)
     connected = True
@@ -33,8 +32,7 @@ if connected:
 
     if submitted:
         try:
-            # শিটে ডাটা পাঠানো
             sheet.append_row([str(date), eggs, feed, medicine])
             st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
         except Exception as e:
-            st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে। দয়া করে পেজটি রিফ্রেশ দিন।")
+            st.error("ডাটা সেভ হয়নি। দয়া করে আবার চেষ্টা করুন।")
