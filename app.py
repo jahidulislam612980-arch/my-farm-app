@@ -3,7 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# ১. গুগল শিট কানেকশন সেটআপ
+# ১. কানেকশন সেটআপ
 info = {
     "type": "service_account",
     "project_id": "long-province-484004-a7",
@@ -17,36 +17,26 @@ info = {
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/farm-manager%40long-province-484004-a7.iam.gserviceaccount.com"
 }
 
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# ২. কানেকশন চেক
-try:
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-    client = gspread.authorize(creds)
-    # আপনার শিটের নাম হুবহু মিলতে হবে
-    sh = client.open("Poultry Data")
-    sheet = sh.get_worksheet(0)
-    connected = True
-except Exception as e:
-    connected = False
-    error_msg = str(e)
-
+# ২. মূল কোড অংশ
 st.title("🐔 খামার ডায়েরি (Farm Manager)")
 
-if connected:
+try:
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    client = gspread.authorize(creds)
+    # আপনার শিটের নাম হুবহু Poultry Data
+    sheet = client.open("Poultry Data").get_worksheet(0)
+    
     with st.form("farm_form", clear_on_submit=True):
         date = st.date_input("তারিখ", datetime.now())
-        eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
-        feed = st.number_input("খাবার খরচ (Feed)", min_value=0.0)
-        medicine = st.text_input("ওষুধ (Medicine)")
+        eggs = st.number_input("আজকের ডিম (সংখ্যা)", min_value=0, step=1)
+        feed = st.number_input("খাবার খরচ (টাকা)", min_value=0.0)
+        medicine = st.text_input("ওষুধের নাম")
         submitted = st.form_submit_button("জমা দিন")
 
     if submitted:
-        try:
-            sheet.append_row([str(date), eggs, feed, medicine])
-            st.success("সফলভাবে সেভ হয়েছে! ✅")
-        except:
-            st.error("ডাটা শিটে পাঠাতে সমস্যা হয়েছে।")
-else:
-    st.error(f"কানেকশন সমস্যা: {error_msg}")
-    st.info("গুগল শিটটি 'farm-manager@long-province-484004-a7.iam.gserviceaccount.com' ইমেইলের সাথে শেয়ার করেছেন তো?")
+        sheet.append_row([str(date), eggs, feed, medicine])
+        st.success("সফলভাবে জমা হয়েছে! ✅")
+except Exception as e:
+    st.error("সমস্যা দেখা দিয়েছে।")
+    st.info(f"কারিগরি তথ্য: {e}")
