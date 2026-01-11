@@ -24,7 +24,7 @@ client = gspread.authorize(creds)
 # আপনার শিটের নাম এখানে হুবহু লিখুন
 # উদাহরণ: sheet = client.open("Poultry Data").sheet1
 try:
-    sheet = client.open("Poultry Data").sheet1 
+sheet = client.open("Poultry Data").get_worksheet(0) 
 except Exception as e:
     st.error("গুগল শিটটি খুঁজে পাওয়া যাচ্ছে না। দয়া করে শিটের নাম চেক করুন।")
 
@@ -46,5 +46,6 @@ if submitted:
         st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
     except Exception as e:
         st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
+
 
 
