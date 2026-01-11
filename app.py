@@ -3,7 +3,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# ১. গুগল শিট কানেকশন সেটআপ
+# ১. গুগল শিট কানেকশন সেটআপ (আপনার দেওয়া JSON ডাটা)
 info = {
     "type": "service_account",
     "project_id": "long-province-484004-a7",
@@ -21,16 +21,16 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
 client = gspread.authorize(creds)
 
-# আপনার শিটের নাম এখানে হুবহু লিখুন
-# উদাহরণ: sheet = client.open("Poultry Data").sheet1
+# ২. আপনার শিট কানেক্ট করা (নাম Poultry Data)
 try:
-sheet = client.open("Poultry Data").get_worksheet(0) 
+    # এখানে একদম সঠিক নাম ব্যবহার করা হয়েছে
+    sheet = client.open("Poultry Data").get_worksheet(0)
 except Exception as e:
     st.error("গুগল শিটটি খুঁজে পাওয়া যাচ্ছে না। দয়া করে শিটের নাম চেক করুন।")
 
 st.title("🐔 খামার ডায়েরি (Farm Manager)")
 
-# ইনপুট ফরম
+# ডাটা ইনপুট ফরম
 with st.form("farm_form", clear_on_submit=True):
     date = st.date_input("তারিখ", datetime.now())
     eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
@@ -41,11 +41,8 @@ with st.form("farm_form", clear_on_submit=True):
 
 if submitted:
     try:
-        # শিটে ডাটা পাঠানো (Date, Eggs, Feed, Medicine কলাম অনুযায়ী)
+        # শিটে ডাটা পাঠানো
         sheet.append_row([str(date), eggs, feed, medicine])
         st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
     except Exception as e:
         st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
-
-
-
