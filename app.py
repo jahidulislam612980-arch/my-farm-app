@@ -1,46 +1,48 @@
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
+import os
 from datetime import datetime
 
-# ১. কানেকশন সেটআপ (সরাসরি আপনার Secrets থেকে ডাটা নিচ্ছে)
-try:
-    info = st.secrets["gcp_service_account"]
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-    client = gspread.authorize(creds)
-    
-    # ২. গুগল শিট ওপেন করা (Poultry Data)
-    sh = client.open("Poultry Data")
-    sheet = sh.get_worksheet(0)
-    connected = True
-except Exception as e:
-    connected = False
-    st.error(f"কানেকশন সমস্যা: {e}")
+# ফাইলের নাম (যেখানে সব ডাটা সেভ হবে)
+DATA_FILE = "farm_data.csv"
 
-# অ্যাপের ইন্টারফেস
+# ১. ডাটা লোড করার ফাংশন
+def load_data():
+    if os.path.exists(DATA_FILE):
+        return pd.read_csv(DATA_FILE)
+    else:
+        # ফাইল না থাকলে নতুন কলাম তৈরি করবে
+        return pd.DataFrame(columns=["তারিখ", "ডিম সংখ্যা", "খাবার খরচ", "ওষুধ"])
+
+# ২. ডাটা সেভ করার ফাংশন
+def save_data(df):
+    df.to_csv(DATA_FILE, index=False)
+
 st.set_page_config(page_title="আমার খামার", page_icon="🐔")
-st.title("🐔 খামার ডায়েরি (Farm Manager)")
+st.title("🐔 খামার ডায়েরি (Offline Mode)")
 
-if connected:
-    # ৩. ডাটা ইনপুট ফরম
-    with st.form("farm_form", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            date = st.date_input("তারিখ", datetime.now())
-            eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
-        with col2:
-            feed = st.number_input("খাবার খরচ (Feed)", min_value=0.0)
-            medicine = st.text_input("ওষুধের নাম (Medicine)")
-        
-        submitted = st.form_submit_button("জমা দিন (Submit)")
+# ৩. ইনপুট ফরম
+with st.form("farm_form", clear_on_submit=True):
+    date = st.date_input("তারিখ", datetime.now())
+    eggs = st.number_input("ডিম সংখ্যা (Eggs)", min_value=0, step=1)
+    feed = st.number_input("খাবার খরচ (Feed)", min_value=0.0)
+    medicine = st.text_input("ওষুধের নাম (Medicine)")
+    
+    submitted = st.form_submit_button("জমা দিন (Save Data)")
 
-    if submitted:
-        try:
-            # ৪. শিটে ডাটা পাঠানো
-            sheet.append_row([str(date), eggs, feed, medicine])
-            st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
-        except Exception as e:
-            st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
+if submitted:
+    df = load_data()
+    # নতুন ডাটা যোগ করা
+    new_data = pd.DataFrame([[str(date), eggs, feed, medicine]], 
+                            columns=["তারিখ", "ডিম সংখ্যা", "খাবার খরচ", "ওষুধ"])
+    df = pd.concat([df, new_data], ignore_index=True)
+    save_data(df)
+    st.success("তথ্য অ্যাপের স্টোরেজে সেভ হয়েছে! ✅")
+
+# ৪. সেভ করা ডাটা টেবিল আকারে দেখানো
+st.subheader("📋 আগের সকল রেকর্ড")
+all_records = load_data()
+if not all_records.empty:
+    st.dataframe(all_records)
 else:
-    st.warning("অ্যাপটি শিটের সাথে কানেক্ট হতে পারেনি। দয়া করে আপনার Streamlit Secrets চেক করুন।")
+    st.info("এখনো কোনো তথ্য সেভ করা হয়নি।")
