@@ -22,7 +22,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
 client = gspread.authorize(creds)
 
 # আপনার শিটের নাম এখানে হুবহু লিখুন
-# উদাহরণ: sheet = client.open("My Chicken Farm").sheet1
+# উদাহরণ: sheet = client.open("Poultry Data").sheet1
 try:
     sheet = client.open("My Farm Sheet").sheet1 
 except Exception as e:
@@ -46,3 +46,4 @@ if submitted:
         st.success("সফলভাবে গুগল শিটে সেভ হয়েছে! ✅")
     except Exception as e:
         st.error(f"ডাটা সেভ করতে সমস্যা হয়েছে: {e}")
+
